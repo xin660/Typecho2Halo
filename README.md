@@ -10,7 +10,13 @@ Typecho 数据导出至 Halo 插件
 
 **注：**
 
+因为typecho和halo后台账号密码加密方式不一样，所以导入halo成功后登录后台密码为：1234567890
 
+## 特别感谢
+
+1、首先特别感谢公子哥的[Export2Valine](https://github.com/lizheming/typecho-export-valine)插件，本插件是基于公子哥的插件二次开发而来~
+2、其次感谢halo开源项目发起人：[Ryan Wang](https://github.com/ruibaby), 该插件的完成离不开仙哥的给力支持已经帮助！
+3、最后感谢[Typecho](https://github.com/typecho)和[Halo](https://github.com/halo-dev)两大开源博客平台，都非常滴优秀👍
 
 ## LICENSE
 
