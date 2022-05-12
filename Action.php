@@ -1,4 +1,5 @@
 <?php
+require_once "Parsedown.php";
 
 class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
 {
@@ -51,10 +52,11 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
     $sql = "SELECT * FROM {$options_table}";
     $tpOptions = $db->fetchAll($db->query($sql));
 
-
     //获取到所有的用户
     $sql = "SELECT * FROM {$users_table}";
     $tpUsers = $db->fetchAll($db->query($sql));
+
+    $Parsedown = new Parsedown();
     
     $attachments = array();
 
@@ -72,6 +74,7 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
         $status = "DRAFT";
       }
 
+      $summary = preg_replace('/[\x00-\xff]+/u', '', mb_substr($Parsedown->text(''. $post["text"] .''),0,500));
       $arr = array(
         "createTime" => (int)$post["created"]*1000,
         "updateTime" => (int)$post["modified"]*1000,
@@ -83,9 +86,9 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
         "editorType" => "MARKDOWN",
         "originalContent" => "",
         "formatContent" => "",
-        "summary" => $post["text"],
+        "summary" => $summary,
         "thumbnail" => "",
-        "visits" => 0,
+        "visits" => $post["views"],
         "disallowComment" => false,
         "password" => "",
         "template" => "",
@@ -96,10 +99,6 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
         "metaDescription" => null,
         "wordCount" => "",
         "version" => 1,
-        "content" => array(
-          "content" => "",
-          "originalContent" => "",
-        ),
         "contentOfNullable" => null,
       );
 
@@ -113,13 +112,15 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
       }else{
         $status = "DRAFT";
       }
+
+      $md_content = preg_replace('/<!--markdown-->(.*?)/','${1}',$Parsedown->text(''. $content["text"] .''));
       $arr = array(
         "createTime" => strtotime("now")*1000,
         "updateTime" => strtotime("now")*1000,
         "id" => (int)$content["cid"],
         "postId" => (int)$content["cid"],
-        "contentDiff" => $content["text"],
-        "originalContentDiff" => $content["text"],
+        "contentDiff" => $md_content,
+        "originalContentDiff" => $md_content,
         "version" => 1,
         "status" => $status,
         "publishTime" => strtotime("now")*1000,
@@ -136,7 +137,8 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
       }else{
         $status = "DRAFT";
       }
-
+      
+      $summary = preg_replace('/[\x00-\xff]+/u', '', mb_substr($Parsedown->text(''. $page["text"] .''),0,500));
       $arr = array(
         "createTime" => (int)$page["created"]*1000,
         "updateTime" => (int)$page["modified"]*1000,
@@ -148,9 +150,9 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
         "editorType" => "MARKDOWN",
         "originalContent" => "",
         "formatContent" => "",
-        "summary" => $page["text"],
+        "summary" => $summary,
         "thumbnail" => "",
-        "visits" => 0,
+        "visits" => $page["views"],
         "disallowComment" => false,
         "password" => "",
         "template" => "",
@@ -220,7 +222,7 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
     $gravatar_source = array(
       "createTime" => strtotime("now")*1000,
       "updateTime" => strtotime("now")*1000,
-      "id" => 6,
+      "id" => 7,
       "type" => "INTERNAL",
       "key" => "gravatar_source",
       "value" => "//cravatar.cn/avatar/"
@@ -231,7 +233,8 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
       $global_absolute_path_enabled,
       $is_installed,
       $blog_title,
-      $blog_locale
+      $blog_locale,
+      $gravatar_source
     );/*  */
 
     $links = array();
@@ -310,17 +313,6 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
       $menus4
     );/*  */
 
-    $logs1 = array(
-      "createTime" => strtotime("now")*1000,
-      "updateTime" => strtotime("now")*1000,
-      "id" => 1,
-      "logKey" => "1",
-      "type" => "POST_PUBLISHED",
-      "content" => "Hello Halo",
-      "ipAddress" => "127.0.0.1"
-    );
-    $logs = array($logs1);/*  */
-
     $comment_black_list = array();
     $sheet_comments = array();
 
@@ -340,7 +332,7 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
       }else{
         $status = "AUDITING";
       }
-
+      $md_content = $Parsedown->text(''. $comment["text"] .'');
       $arr = array(
         "createTime" => (int)$comment["created"]*1000,
         "updateTime" => (int)$comment["created"]*1000,
@@ -350,7 +342,7 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
         "ipAddress" => $comment["ip"],
         "authorUrl" => $comment["url"],
         "gravatarMd5" => $MD5email,
-        "content" => $comment["text"],
+        "content" => $md_content,
         "status" => $status,
         "userAgent" => $comment["agent"],
         "isAdmin" => $isAdmin,
@@ -406,6 +398,7 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
       }else{
         $status = "DRAFT";
       }
+      $md_content = preg_replace('/<!--markdown-->(.*?)/','${1}',$Parsedown->text(''. $content["text"] .''));
       $arr = array(
         "createTime" => strtotime("now")*1000,
         "updateTime" => strtotime("now")*1000,
@@ -413,8 +406,8 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
         "status" => $status,
         "patchLogId" => (int)$content["cid"],
         "headPatchLogId" => (int)$content["cid"],
-        "content" => $content["text"],
-        "originalContent" => $content["text"]
+        "content" => $md_content,
+        "originalContent" => preg_replace('/<!--markdown-->(.*?)/','${1}',$content["text"])
       );
 
       $contents[] = $arr;
@@ -446,7 +439,7 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
         "createTime" => (int)$users["created"]*1000,
         "updateTime" => (int)$users["created"]*1000,
         "id" => (int)$users["uid"],
-        "username" => $users["name"],
+        "username" => "admin",
         "nickname" => $users["screenName"],
         "password" => '$2a$10$XEV16yn2BbgPhVUadtKM0eqvIo8O4kSFJiDzybDomJ0uq99F49zue',//1234567890
         "email" => $users["mail"],
@@ -476,7 +469,7 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
     "options" => $options,
     "links" => $links,
     "categories" => $categories,
-    "menus" => [],
+    "menus" => $menus,
     "logs" => [],
     "comment_black_list" => $comment_black_list,
     "sheet_comments" => $sheet_comments,

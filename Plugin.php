@@ -4,7 +4,7 @@
  *
  * @package Typecho2Halo
  * @author 公子 | irils
- * @version 1.5.3
+ * @version 1.1.0
  * @link https://www.rz.sb
  */
 class Typecho2Halo_Plugin implements Typecho_Plugin_Interface
