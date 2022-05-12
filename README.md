@@ -1,4 +1,4 @@
-## Export2Valine
+## Typecho2Halo
 
 Typecho 数据导出至 Halo 插件
 
