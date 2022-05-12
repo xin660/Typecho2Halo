@@ -12,5 +12,8 @@ Typecho 数据导出至 Halo 插件
 
 
 
+## LICENSE
+
+[MIT LICENSE](https://github.com/lizheming/typecho-export-valine/blob/master/LICENSE)
 
 
