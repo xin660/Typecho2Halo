@@ -332,7 +332,6 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
       }else{
         $status = "AUDITING";
       }
-      $md_content = $Parsedown->text(''. $comment["text"] .'');
       $arr = array(
         "createTime" => (int)$comment["created"]*1000,
         "updateTime" => (int)$comment["created"]*1000,
@@ -342,7 +341,7 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
         "ipAddress" => $comment["ip"],
         "authorUrl" => $comment["url"],
         "gravatarMd5" => $MD5email,
-        "content" => $md_content,
+        "content" => $comment["text"],
         "status" => $status,
         "userAgent" => $comment["agent"],
         "isAdmin" => $isAdmin,
