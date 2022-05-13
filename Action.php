@@ -30,9 +30,12 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
     $sql = "SELECT * FROM {$content_table} WHERE `type` in ('page')";
     $tpPage = $db->fetchAll($db->query($sql));
 
-    //获取到所有的评论
-    $sql = "SELECT * FROM {$comment_table} WHERE `status` != 'spam'";
-    $tpComments = $db->fetchAll($db->query($sql));
+    //获取文章所有的评论
+    $sql = "SELECT * FROM {$comment_table} INNER JOIN {$content_table} ON {$comment_table}.`cid` = {$content_table}.`cid` WHERE (typecho_contents.`type` = 'post')";
+    $tpPostComments = $db->fetchAll($db->query($sql));
+    //获取页面所有的评论
+    $sql = "SELECT * FROM {$comment_table} INNER JOIN {$content_table} ON {$comment_table}.`cid` = {$content_table}.`cid` WHERE (typecho_contents.`type` = 'page')";
+    $tpPageComments = $db->fetchAll($db->query($sql));
 
     //获取到所有的分类
     $sql = "SELECT * FROM {$metas_table} WHERE `type` in ('category')";
@@ -314,10 +317,47 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
     );/*  */
 
     $comment_black_list = array();
+
     $sheet_comments = array();
+    foreach($tpPageComments as $sheet) {
+      $email = strtolower($sheet['mail']);
+      $MD5email = md5($email);
+
+      if($sheet['authorId'] == 1){
+        $isAdmin = true;
+      }else{
+        $isAdmin = false;
+      }
+
+      if($sheet['status'] == "approved"){
+        $status = "PUBLISHED";
+      }else{
+        $status = "AUDITING";
+      }
+      $arr = array(
+        "createTime" => (int)$sheet["created"]*1000,
+        "updateTime" => (int)$sheet["created"]*1000,
+        "id" => (int)$sheet["coid"],
+        "author" => $sheet["author"],
+        "email" => $sheet["mail"],
+        "ipAddress" => $sheet["ip"],
+        "authorUrl" => $sheet["url"],
+        "gravatarMd5" => $MD5email,
+        "content" => $sheet["text"],
+        "status" => $status,
+        "userAgent" => $sheet["agent"],
+        "isAdmin" => $isAdmin,
+        "allowNotification" => true,
+        "postId" => (int)$sheet["cid"],
+        "topPriority" => null,
+        "parentId" => (int)$sheet["parent"]
+      );
+
+      $sheet_comments[] = $arr;
+    }
 
     $post_comments = array();
-    foreach($tpComments as $comment) {
+    foreach($tpPostComments as $comment) {
       $email = strtolower($comment['mail']);
       $MD5email = md5($email);
 
