@@ -31,10 +31,10 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
     $tpPage = $db->fetchAll($db->query($sql));
 
     //获取文章所有的评论
-    $sql = "SELECT * FROM {$comment_table} INNER JOIN {$content_table} ON {$comment_table}.`cid` = {$content_table}.`cid` WHERE (typecho_contents.`type` = 'post')";
+    $sql = "SELECT * FROM {$content_table} INNER JOIN {$comment_table} ON {$content_table}.`cid` = {$comment_table}.`cid` WHERE ({$content_table}.`type` = 'post')";
     $tpPostComments = $db->fetchAll($db->query($sql));
     //获取页面所有的评论
-    $sql = "SELECT * FROM {$comment_table} INNER JOIN {$content_table} ON {$comment_table}.`cid` = {$content_table}.`cid` WHERE (typecho_contents.`type` = 'page')";
+    $sql = "SELECT * FROM {$content_table} INNER JOIN {$comment_table} ON {$content_table}.`cid` = {$comment_table}.`cid` WHERE ({$content_table}.`type` = 'page')";
     $tpPageComments = $db->fetchAll($db->query($sql));
 
     //获取到所有的分类
