@@ -19,6 +19,8 @@ Typecho 数据导出至 Halo 插件
 
 登录成功后建议尽快更改账号秘密
 
+欢迎加入群聊【博友圈】：[345494089](https://jq.qq.com/?_wv=1027&k=RpFKfmbF) 
+
 ## 特别感谢
 
 1、首先特别感谢公子哥的[Export2Valine](https://github.com/lizheming/typecho-export-valine)插件，本插件是基于公子哥的插件二次开发而来~
