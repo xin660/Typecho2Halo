@@ -30,13 +30,13 @@ include 'menu.php';
             <span class="multiline">
             <input name="markdown-renderer" type="radio" value="md-server" id="markdown-parse-halo">
             <label for="markdown-parse-halo">
-            @halo-dev/md-server  <input type="text" class="w-50 text-s mono" name="md-server" value="http://localhost:8000/render"></label>
+            @halo-dev/md-server  <input type="text" class="w-50 text-s mono" name="md-server" value="http://你本地服务器ip:8000/render"></label>
             </span>
             <div class="description">
               <p style="color:blue;">选择该方式前你需要进行以下操作：<br>
-              1、前往<a href="https://github.com/iRoZhi/Typecho2Halo/issues">@halo-dev/md-server</a>，下载由halo官方提供的Markdown渲染库到本地<br>
+              1、前往<a href="https://github.com/iRoZhi/Typecho2Halo/issues">@halo-dev/md-server</a>，下载由halo官方提供的Markdown渲染库到你本地服务器<br>
               2、解压之后打开cmd命令，依次执行 【pnpm install】、【node server.js】这两个命令运行该服务（前提得支持pnpm命令，可自行百度）<br>
-              3、以上命令执行完成，访问 <a href="http://localhost:8000/render">http://localhost:8000/render</a> 检查是否可访问，访问时会提示（Cannot GET /render），这个不用管，因为该服务接口仅支持POST，能访问就行<br>
+              3、以上命令执行完成，检查8000端口是否放行，访问 http://你本地服务器ip:8000/render 检查是否可访问，访问时会提示（Cannot GET /render），这个不用管，因为该服务接口仅支持POST，能访问就行<br>
               </p>
               <p style="color:red;">使用开启此渲染方式前，请确认你php配置是否有禁用curl（一般默认开启）以及以上服务是否启动</p>
               <p>说明：由于 Halo 与 Typecho 渲染 Markdown 所使用的库不一样，所以可能会导致导出之后，在 Halo 中显示会有一定差异，建议有条件的可以使用 Halo 官方的 md-server。</p>
