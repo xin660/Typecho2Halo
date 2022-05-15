@@ -9,7 +9,9 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
    * @access public
    * @return void
    */
-  public function doExport() {
+  public function doExport($request)
+  {
+
     $db = Typecho_Db::get();
     $prefix = $db->getPrefix();
     $comment_table = $prefix . 'comments';
@@ -18,10 +20,12 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
     $relationships_table = $prefix . 'relationships';
     $options_table = $prefix . 'options';
     $users_table = $prefix . 'users';
+    $markdown_engine = $request->get('markdown-renderer');
+    $md_server = $request->get('md-server');
 
     $sql = "SELECT * FROM {$content_table} WHERE `type` in ('post','page')";
     $tpContent = $db->fetchAll($db->query($sql));
-    
+
     //获取到所有的文章
     $sql = "SELECT * FROM {$content_table} WHERE `type` in ('post')";
     $tpPost = $db->fetchAll($db->query($sql));
@@ -60,7 +64,7 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
     $tpUsers = $db->fetchAll($db->query($sql));
 
     $Parsedown = new Parsedown();
-    
+
     $attachments = array();
 
     $journal_comments = array();
@@ -70,17 +74,17 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
     $photos = array();
 
     $posts = array();/*  */
-    foreach($tpPost as $post) {
-      if($post['status'] == "publish"){
+    foreach ($tpPost as $post) {
+      if ($post['status'] == "publish") {
         $status = "PUBLISHED";
-      }else{
+      } else {
         $status = "DRAFT";
       }
 
-      $summary = preg_replace('/[\x00-\xff]+/u', '', mb_substr($Parsedown->text(''. $post["text"] .''),0,500));
+      $summary = preg_replace('/[\x00-\xff]+/u', '', mb_substr($Parsedown->text('' . $post["text"] . ''), 0, 500));
       $arr = array(
-        "createTime" => (int)$post["created"]*1000,
-        "updateTime" => (int)$post["modified"]*1000,
+        "createTime" => (int)$post["created"] * 1000,
+        "updateTime" => (int)$post["modified"] * 1000,
         "id" => (int)$post["cid"],
         "title" => $post["title"],
         "status" => $status,
@@ -97,7 +101,7 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
         "template" => "",
         "topPriority" => 0,
         "likes" => 0,
-        "editTime" => (int)$post["modified"]*1000,
+        "editTime" => (int)$post["modified"] * 1000,
         "metaKeywords" => null,
         "metaDescription" => null,
         "wordCount" => "",
@@ -109,24 +113,37 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
     }
 
     $content_patch_logs = array();/*  */
-    foreach($tpContent as $content) {
-      if($content['status'] == "publish"){
+    foreach ($tpContent as $content) {
+      if ($content['status'] == "publish") {
         $status = "PUBLISHED";
-      }else{
+      } else {
         $status = "DRAFT";
       }
-
-      $md_content = preg_replace('/<!--markdown-->(.*?)/','${1}',$Parsedown->text(''. $content["text"] .''));
+      if($markdown_engine == "parsedown"){
+        $md_content = preg_replace('/<!--markdown-->(.*?)/','${1}',$Parsedown->text(''. $content["text"] .''));
+      } else{
+        $md_content = "";
+        $fields = array(
+          'text' => preg_replace('/<!--markdown-->(.*?)/','${1}',$content["text"])
+        );
+        $ch = curl_init($md_server);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS,  json_encode($fields));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $md_content = curl_exec($ch);
+        curl_close($ch);
+      }
       $arr = array(
-        "createTime" => strtotime("now")*1000,
-        "updateTime" => strtotime("now")*1000,
+        "createTime" => strtotime("now") * 1000,
+        "updateTime" => strtotime("now") * 1000,
         "id" => (int)$content["cid"],
         "postId" => (int)$content["cid"],
         "contentDiff" => $md_content,
         "originalContentDiff" => $md_content,
         "version" => 1,
         "status" => $status,
-        "publishTime" => strtotime("now")*1000,
+        "publishTime" => strtotime("now") * 1000,
         "sourceId" => 0
       );
 
@@ -134,17 +151,17 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
     }
 
     $sheets = array();/*  */
-    foreach($tpPage as $page) {
-      if($page['status'] == "publish"){
+    foreach ($tpPage as $page) {
+      if ($page['status'] == "publish") {
         $status = "PUBLISHED";
-      }else{
+      } else {
         $status = "DRAFT";
       }
-      
-      $summary = preg_replace('/[\x00-\xff]+/u', '', mb_substr($Parsedown->text(''. $page["text"] .''),0,500));
+
+      $summary = preg_replace('/[\x00-\xff]+/u', '', mb_substr($Parsedown->text('' . $page["text"] . ''), 0, 500));
       $arr = array(
-        "createTime" => (int)$page["created"]*1000,
-        "updateTime" => (int)$page["modified"]*1000,
+        "createTime" => (int)$page["created"] * 1000,
+        "updateTime" => (int)$page["modified"] * 1000,
         "id" => (int)$page["cid"],
         "title" => $page["title"],
         "status" => $status,
@@ -161,7 +178,7 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
         "template" => "",
         "topPriority" => 0,
         "likes" => 0,
-        "editTime" => (int)$page["modified"]*1000,
+        "editTime" => (int)$page["modified"] * 1000,
         "metaKeywords" => null,
         "metaDescription" => null,
         "wordCount" => "",
@@ -172,8 +189,8 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
     }
 
     $birthday = array(
-      "createTime" => strtotime("now")*1000,
-      "updateTime" => strtotime("now")*1000,
+      "createTime" => strtotime("now") * 1000,
+      "updateTime" => strtotime("now") * 1000,
       "id" => 1,
       "type" => "INTERNAL",
       "key" => "birthday",
@@ -181,50 +198,50 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
     );
     $blog_url = Helper::options()->siteUrl;
     $blog_url = array(
-      "createTime" => strtotime("now")*1000,
-      "updateTime" => strtotime("now")*1000,
+      "createTime" => strtotime("now") * 1000,
+      "updateTime" => strtotime("now") * 1000,
       "id" => 2,
       "type" => "INTERNAL",
       "key" => "blog_url",
       "value" => "http://localhost:8090"
     );
     $global_absolute_path_enabled = array(
-      "createTime" => strtotime("now")*1000,
-      "updateTime" => strtotime("now")*1000,
+      "createTime" => strtotime("now") * 1000,
+      "updateTime" => strtotime("now") * 1000,
       "id" => 3,
       "type" => "INTERNAL",
       "key" => "global_absolute_path_enabled",
       "value" => "false"
     );
     $is_installed = array(
-      "createTime" => strtotime("now")*1000,
-      "updateTime" => strtotime("now")*1000,
+      "createTime" => strtotime("now") * 1000,
+      "updateTime" => strtotime("now") * 1000,
       "id" => 4,
       "type" => "INTERNAL",
       "key" => "is_installed",
       "value" => "true"
     );
-    
+
     $blog_title = Helper::options()->title;
     $blog_title = array(
-      "createTime" => strtotime("now")*1000,
-      "updateTime" => strtotime("now")*1000,
+      "createTime" => strtotime("now") * 1000,
+      "updateTime" => strtotime("now") * 1000,
       "id" => 5,
       "type" => "INTERNAL",
       "key" => "blog_title",
       "value" => $blog_title
     );
     $blog_locale = array(
-      "createTime" => strtotime("now")*1000,
-      "updateTime" => strtotime("now")*1000,
+      "createTime" => strtotime("now") * 1000,
+      "updateTime" => strtotime("now") * 1000,
       "id" => 6,
       "type" => "INTERNAL",
       "key" => "blog_locale",
       "value" => "zh"
     );
     $gravatar_source = array(
-      "createTime" => strtotime("now")*1000,
-      "updateTime" => strtotime("now")*1000,
+      "createTime" => strtotime("now") * 1000,
+      "updateTime" => strtotime("now") * 1000,
       "id" => 7,
       "type" => "INTERNAL",
       "key" => "gravatar_source",
@@ -243,10 +260,10 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
     $links = array();
 
     $categories = array();/*  */
-    foreach($tpCategory as $categorie) {
+    foreach ($tpCategory as $categorie) {
       $arr = array(
-        "createTime" => strtotime("now")*1000,
-        "updateTime" => strtotime("now")*1000,
+        "createTime" => strtotime("now") * 1000,
+        "updateTime" => strtotime("now") * 1000,
         "id" => (int)$categorie["mid"],
         "name" => $categorie["name"],
         "slugName" => null,
@@ -262,8 +279,8 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
     }
 
     $menus1 = array(
-      "createTime" => strtotime("now")*1000,
-      "updateTime" => strtotime("now")*1000,
+      "createTime" => strtotime("now") * 1000,
+      "updateTime" => strtotime("now") * 1000,
       "id" => 1,
       "name" => "首页",
       "url" => "/",
@@ -274,8 +291,8 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
       "team" => "",
     );
     $menus2 = array(
-      "createTime" => strtotime("now")*1000,
-      "updateTime" => strtotime("now")*1000,
+      "createTime" => strtotime("now") * 1000,
+      "updateTime" => strtotime("now") * 1000,
       "id" => 2,
       "name" => "文章归档",
       "url" => "/archives",
@@ -286,8 +303,8 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
       "team" => "",
     );
     $menus3 = array(
-      "createTime" => strtotime("now")*1000,
-      "updateTime" => strtotime("now")*1000,
+      "createTime" => strtotime("now") * 1000,
+      "updateTime" => strtotime("now") * 1000,
       "id" => 3,
       "name" => "默认分类",
       "url" => "/categories/default",
@@ -298,8 +315,8 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
       "team" => "",
     );
     $menus4 = array(
-      "createTime" => strtotime("now")*1000,
-      "updateTime" => strtotime("now")*1000,
+      "createTime" => strtotime("now") * 1000,
+      "updateTime" => strtotime("now") * 1000,
       "id" => 4,
       "name" => "关于页面",
       "url" => "/s/about",
@@ -319,24 +336,24 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
     $comment_black_list = array();
 
     $sheet_comments = array();
-    foreach($tpPageComments as $sheet) {
+    foreach ($tpPageComments as $sheet) {
       $email = strtolower($sheet['mail']);
       $MD5email = md5($email);
 
-      if($sheet['authorId'] == 1){
+      if ($sheet['authorId'] == 1) {
         $isAdmin = true;
-      }else{
+      } else {
         $isAdmin = false;
       }
 
-      if($sheet['status'] == "approved"){
+      if ($sheet['status'] == "approved") {
         $status = "PUBLISHED";
-      }else{
+      } else {
         $status = "AUDITING";
       }
       $arr = array(
-        "createTime" => (int)$sheet["created"]*1000,
-        "updateTime" => (int)$sheet["created"]*1000,
+        "createTime" => (int)$sheet["created"] * 1000,
+        "updateTime" => (int)$sheet["created"] * 1000,
         "id" => (int)$sheet["coid"],
         "author" => $sheet["author"],
         "email" => $sheet["mail"],
@@ -357,24 +374,24 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
     }
 
     $post_comments = array();
-    foreach($tpPostComments as $comment) {
+    foreach ($tpPostComments as $comment) {
       $email = strtolower($comment['mail']);
       $MD5email = md5($email);
 
-      if($comment['authorId'] == 1){
+      if ($comment['authorId'] == 1) {
         $isAdmin = true;
-      }else{
+      } else {
         $isAdmin = false;
       }
 
-      if($comment['status'] == "approved"){
+      if ($comment['status'] == "approved") {
         $status = "PUBLISHED";
-      }else{
+      } else {
         $status = "AUDITING";
       }
       $arr = array(
-        "createTime" => (int)$comment["created"]*1000,
-        "updateTime" => (int)$comment["created"]*1000,
+        "createTime" => (int)$comment["created"] * 1000,
+        "updateTime" => (int)$comment["created"] * 1000,
         "id" => (int)$comment["coid"],
         "author" => $comment["author"],
         "email" => $comment["mail"],
@@ -401,10 +418,10 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
     $journals = array();
 
     $tags = array();/*  */
-    foreach($tpTag as $tag) {
+    foreach ($tpTag as $tag) {
       $arr = array(
-        "createTime" => strtotime("now")*1000,
-        "updateTime" => strtotime("now")*1000,
+        "createTime" => strtotime("now") * 1000,
+        "updateTime" => strtotime("now") * 1000,
         "id" => (int)$tag["mid"],
         "name" => $tag["name"],
         "slugName" => null,
@@ -418,10 +435,10 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
 
     $post_categories = array();/*  */
     $index = 0;
-    foreach($categorys as $categorie) {
+    foreach ($categorys as $categorie) {
       $arr = array(
-        "createTime" => strtotime("now")*1000,
-        "updateTime" => strtotime("now")*1000,
+        "createTime" => strtotime("now") * 1000,
+        "updateTime" => strtotime("now") * 1000,
         "id" => (int)$index++,
         "categoryId" => (int)$categorie["mid"],
         "postId" => (int)$categorie["cid"]
@@ -430,23 +447,39 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
       $post_categories[] = $arr;
     }
 
+
     $contents = array();/*  */
-    foreach($tpContent as $content) {
-      if($content['status'] == "publish"){
+    foreach ($tpContent as $content) {
+      if ($content['status'] == "publish") {
         $status = "PUBLISHED";
-      }else{
+      } else {
         $status = "DRAFT";
       }
-      $md_content = preg_replace('/<!--markdown-->(.*?)/','${1}',$Parsedown->text(''. $content["text"] .''));
+      if($markdown_engine == "parsedown"){
+        $md_content = preg_replace('/<!--markdown-->(.*?)/','${1}',$Parsedown->text(''. $content["text"] .''));
+      } else{
+        $md_content = "";
+        $fields = array(
+          'text' => preg_replace('/<!--markdown-->(.*?)/','${1}',$content["text"])
+        );
+        $ch = curl_init($md_server);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS,  json_encode($fields));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $md_content = curl_exec($ch);
+        curl_close($ch);
+      }
+      
       $arr = array(
-        "createTime" => strtotime("now")*1000,
-        "updateTime" => strtotime("now")*1000,
+        "createTime" => strtotime("now") * 1000,
+        "updateTime" => strtotime("now") * 1000,
         "id" => (int)$content["cid"],
         "status" => $status,
         "patchLogId" => (int)$content["cid"],
         "headPatchLogId" => (int)$content["cid"],
         "content" => $md_content,
-        "originalContent" => preg_replace('/<!--markdown-->(.*?)/','${1}',$content["text"])
+        "originalContent" => preg_replace('/<!--markdown-->(.*?)/', '${1}', $content["text"])
       );
 
       $contents[] = $arr;
@@ -454,10 +487,10 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
 
     $post_tags = array();
     $index = 0;
-    foreach($tpTags as $tag) {
+    foreach ($tpTags as $tag) {
       $arr = array(
-        "createTime" => strtotime("now")*1000,
-        "updateTime" => strtotime("now")*1000,
+        "createTime" => strtotime("now") * 1000,
+        "updateTime" => strtotime("now") * 1000,
         "id" => (int)$index++,
         "tagId" => (int)$tag["mid"],
         "postId" => (int)$tag["cid"]
@@ -469,66 +502,67 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
     $post_metas = array();
 
     $user = array();/*  */
-    foreach($tpUsers as $users) {
+    foreach ($tpUsers as $users) {
       $email = strtolower($users['mail']);
       $MD5email = md5($email);
-      $avatar = '//cravatar.cn/avatar/'.$MD5email.'?d=mm';
+      $avatar = '//cravatar.cn/avatar/' . $MD5email . '?d=mm';
 
       $arr = array(
-        "createTime" => (int)$users["created"]*1000,
-        "updateTime" => (int)$users["created"]*1000,
+        "createTime" => (int)$users["created"] * 1000,
+        "updateTime" => (int)$users["created"] * 1000,
         "id" => (int)$users["uid"],
         "username" => "admin",
         "nickname" => $users["screenName"],
-        "password" => '$2a$10$XEV16yn2BbgPhVUadtKM0eqvIo8O4kSFJiDzybDomJ0uq99F49zue',//1234567890
+        "password" => '$2a$10$XEV16yn2BbgPhVUadtKM0eqvIo8O4kSFJiDzybDomJ0uq99F49zue', //1234567890
         "email" => $users["mail"],
         "avatar" => $avatar,
         "description" => "",
-        "expireTime" => (int)$users["logged"]*1000,
+        "expireTime" => (int)$users["logged"] * 1000,
         "mfaType" => "NONE",
         "mfaKey" => null
       );
 
       $user[] = $arr;
     }
-    
+
     // 备份文件名
-    $fileName = 'halo-data-export-' . strtotime("now")*1000 . '.json';
+    $fileName = 'halo-data-export-' . strtotime("now") * 1000 . '.json';
     header('Content-Type: application/json');
     header('Content-Disposition: attachment; filename=' . $fileName);
     echo json_encode(array(
-    "attachments" => $attachments,
-    "export_date" => strtotime("now")*1000,
-    "journal_comments" => $journal_comments,
-    "theme_settings" => $theme_settings,
-    "photos" => $photos,
-    "posts" => $posts,
-    "content_patch_logs" => $content_patch_logs,
-    "sheets" => $sheets,
-    "options" => $options,
-    "links" => $links,
-    "categories" => $categories,
-    "menus" => $menus,
-    "logs" => [],
-    "comment_black_list" => $comment_black_list,
-    "sheet_comments" => $sheet_comments,
-    "post_comments" => $post_comments,
-    "sheet_metas" => $sheet_metas,
-    "version" => "1.5.3",
-    "journals" => $journals,
-    "tags" => $tags,
-    "post_categories" => $post_categories,
-    "contents" => $contents,
-    "post_tags" => $post_tags,
-    "post_metas" => $post_metas,
-    "user" => $user,
+      "attachments" => $attachments,
+      "export_date" => strtotime("now") * 1000,
+      "journal_comments" => $journal_comments,
+      "theme_settings" => $theme_settings,
+      "photos" => $photos,
+      "posts" => $posts,
+      "content_patch_logs" => $content_patch_logs,
+      "sheets" => $sheets,
+      "options" => $options,
+      "links" => $links,
+      "categories" => $categories,
+      "menus" => $menus,
+      "logs" => [],
+      "comment_black_list" => $comment_black_list,
+      "sheet_comments" => $sheet_comments,
+      "post_comments" => $post_comments,
+      "sheet_metas" => $sheet_metas,
+      "version" => "1.5.3",
+      "journals" => $journals,
+      "tags" => $tags,
+      "post_categories" => $post_categories,
+      "contents" => $contents,
+      "post_tags" => $post_tags,
+      "post_metas" => $post_metas,
+      "user" => $user
 
-    ),JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE);
+    ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
   }
 
-  private function getRootId($id) {
-    $parentId = $this->commentHash[$id];  
-    if(!$parentId) {
+  private function getRootId($id)
+  {
+    $parentId = $this->commentHash[$id];
+    if (!$parentId) {
       return $id;
     }
 
@@ -541,8 +575,9 @@ class Typecho2Halo_Action extends Typecho_Widget implements Widget_Interface_Do
    * @access public
    * @return void
    */
-  public function action() {
+  public function action()
+  {
     $this->widget('Widget_User')->pass('administrator');
-    $this->on($this->request->is('export'))->doExport();
+    $this->on($this->request->is('export'))->doExport($this->request);
   }
 }

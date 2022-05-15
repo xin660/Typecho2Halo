@@ -3,9 +3,9 @@
  * Typecho 数据导出到 Halo
  *
  * @package Typecho2Halo
- * @author 公子 | irils
- * @version 1.1.0
- * @link https://www.rz.sb
+ * @author 公子 | Ryan Wang | irils
+ * @version 1.1.2
+ * @link https://github.com/iRoZhi/Typecho2Halo
  */
 class Typecho2Halo_Plugin implements Typecho_Plugin_Interface
 {
